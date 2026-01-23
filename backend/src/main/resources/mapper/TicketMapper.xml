@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ticketsystem.mapper.TicketMapper">
+
+    <!-- 工单结果映射（包含用户信息） -->
+    <resultMap id="TicketWithUserInfoResultMap" type="com.ticketsystem.entity.Ticket">
+        <id column="id" property="id"/>
+        <result column="ticket_no" property="ticketNo"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="category" property="category"/>
+        <result column="priority" property="priority"/>
+        <result column="status" property="status"/>
+        <result column="creator_id" property="creatorId"/>
+        <result column="handler_id" property="handlerId"/>
+        <result column="attachment_urls" property="attachmentUrls"/>
+        <result column="resolution" property="resolution"/>
+        <result column="resolved_time" property="resolvedTime"/>
+        <result column="closed_time" property="closedTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+
+        <!-- 创建人信息 -->
+        <association property="creator" javaType="com.ticketsystem.entity.User">
+            <id column="creator_id" property="id"/>
+            <result column="creator_username" property="username"/>
+            <result column="creator_real_name" property="realName"/>
+            <result column="creator_email" property="email"/>
+        </association>
+
+        <!-- 处理人信息 -->
+        <association property="handler" javaType="com.ticketsystem.entity.User">
+            <id column="handler_id" property="id"/>
+            <result column="handler_username" property="username"/>
+            <result column="handler_real_name" property="realName"/>
+            <result column="handler_email" property="email"/>
+        </association>
+    </resultMap>
+
+    <!-- 分页查询工单列表（包含用户信息） -->
+    <select id="selectTicketPageWithUserInfo" resultMap="TicketWithUserInfoResultMap">
+        SELECT
+            t.id,
+            t.ticket_no,
+            t.title,
+            t.description,
+            t.category,
+            t.priority,
+            t.status,
+            t.creator_id,
+            t.handler_id,
+            t.attachment_urls,
+            t.resolution,
+            t.resolved_time,
+            t.closed_time,
+            t.create_time,
+            t.update_time,
+            creator.username AS creator_username,
+            creator.real_name AS creator_real_name,
+            creator.email AS creator_email,
+            handler.username AS handler_username,
+            handler.real_name AS handler_real_name,
+            handler.email AS handler_email
+        FROM tickets t
+        LEFT JOIN users creator ON t.creator_id = creator.id
+        LEFT JOIN users handler ON t.handler_id = handler.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (t.title LIKE CONCAT('%', #{keyword}, '%')
+                OR t.ticket_no LIKE CONCAT('%', #{keyword}, '%')
+                OR t.description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="status != null and status != ''">
+                AND t.status = #{status}
+            </if>
+            <if test="priority != null and priority != ''">
+                AND t.priority = #{priority}
+            </if>
+            <if test="category != null and category != ''">
+                AND t.category = #{category}
+            </if>
+            <if test="creatorId != null">
+                AND t.creator_id = #{creatorId}
+            </if>
+            <if test="handlerId != null">
+                AND t.handler_id = #{handlerId}
+            </if>
+        </where>
+        ORDER BY t.create_time DESC
+    </select>
+
+</mapper>
